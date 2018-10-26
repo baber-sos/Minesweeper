@@ -268,8 +268,8 @@ def playgame(game_size):
             if min_probability[0] == float('inf'):
                 done = 1;
                 continue;
-            random_cell = random.randint(0, len(min_probability[1]) - 1);
-            random_cell = min_probability[1][random_cell];
+            #random_cell = random.randint(0, len(min_probability[1]) - 1);
+            random_cell = random.sample(min_probability[1]);#min_probability[1][random_cell];
             if user_board[random_cell[0]][random_cell[1]] == -1:
                 print('Oops we lost'); exit(-1);
             else:
