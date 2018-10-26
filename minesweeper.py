@@ -1,3 +1,4 @@
+import random
 user_board = [[0,0,0,0,0,1,1,1,0],
         [0,0,1,1,1,1,-1,1,0],
         [0,0,1,-1,2,2,2,1,0],
@@ -203,7 +204,7 @@ def playgame(game_size):
                 if unknowns[1][i][0] == 0:
                     #if division_flag and cell == (3, 3):
                     #    print(cell, unknowns, open_cells[cell], clear_indices);
-                    add_cells(open_cells, [unknowns[1][i]], game_size, board);
+                    open_cells = add_cells(open_cells, [unknowns[1][i]], game_size, board);
                     #if division_flag and cell == (3, 3):
                     #    print(cell, unknowns, open_cells[cell], clear_indices);
                     clear_indices.append(i);
@@ -263,10 +264,20 @@ def playgame(game_size):
            ##we have to handle two simple cases and one probabilistic and logical case
             #continue;
         if update_flag == False:
+            if min_probability[0] == float('inf'):
+                done = 1;
+                continue;
+            random_cell = random.randint(0, len(min_probability[1]) - 1);
+            if user_board[random_cell[0]][random_cell[1]] == -1:
+                print('Oops we lost'); exit(-1);
+            else:
+                open_cells = add_cells(open_cells, [0, set([random_cell])], game_size, board);
             print('this is the minimum probability: ', min_probability);
         for i in range(len(board)):
             print(board[i]);
         input('press enter to continue playing!');
+    for i in range(len(board)):
+        print(board[i]);
     return;
 if __name__ == '__main__':
     playgame((9,9));
