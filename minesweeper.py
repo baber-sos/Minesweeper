@@ -228,7 +228,7 @@ def playgame(game_size):
                     #for k, v in open_cells.items():
                     #    print(k, v);
                 open_cells, cur_min_probability, cur_flag = intersect_and_divide(open_cells, cell);
-                print('this the current flag: ', cur_flag);
+                #print('this the current flag: ', cur_flag);
                 if cur_flag == True:
                     update_flag = True;
                 if cur_min_probability[0] < min_probability[0]:
@@ -264,10 +264,12 @@ def playgame(game_size):
            ##we have to handle two simple cases and one probabilistic and logical case
             #continue;
         if update_flag == False:
+            print('Going to guess!');
             if min_probability[0] == float('inf'):
                 done = 1;
                 continue;
             random_cell = random.randint(0, len(min_probability[1]) - 1);
+            random_cell = min_probability[1][random_cell];
             if user_board[random_cell[0]][random_cell[1]] == -1:
                 print('Oops we lost'); exit(-1);
             else:
