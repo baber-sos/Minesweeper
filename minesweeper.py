@@ -1,13 +1,20 @@
 import random
-user_board = [[0,0,0,0,0,1,1,1,0],
-        [0,0,1,1,1,1,-1,1,0],
-        [0,0,1,-1,2,2,2,1,0],
-        [1,1,3,2,3,-1,1,0,0],
-        [2,-1,4,-1,3,2,1,0,0],
-        [2,-1,-1,3,-1,1,0,0,0],
-        [1,2,2,2,1,1,0,0,0],
-        [0,0,1,1,1,0,1,1,1],
-        [0,0,1,-1,1,0,1,-1,1]]
+user_board = [[0,0,0,1,1,3,-1,2,1,-1,3,2,1,0,0,0],
+        [0,0,0,1,-1,3,-1,2,1,3,-1,-1,2,1,1,0],
+        [0,0,0,1,1,3,2,2,0,3,-1,5,3,-1,3,2],
+        [1,1,1,0,0,1,-1,1,0,2,-1,-1,3,3,-1,-1],
+        [1,-1,1,0,0,1,1,1,0,1,2,2,2,-1,3,2],
+        [1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0],
+        [2,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [-1,-1,2,1,1,1,0,0,1,1,1,0,0,0,0,0],
+	[3,-1,2,1,-1,1,0,0,1,-1,2,2,2,2,1,0],
+	[2,3,3,2,1,1,0,1,3,4,-1,2,-1,-1,1,0],
+	[1,-1,-1,3,1,1,2,4,-1,-1,2,2,2,2,1,0],
+	[1,3,-1,-1,1,1,-1,-1,-1,4,2,1,1,1,0,0],
+	[0,2,3,3,1,1,2,3,3,-1,2,2,-1,1,0,0],
+	[0,1,-1,2,1,0,0,0,1,2,-1,2,1,1,0,0],
+	[1,2,3,-1,1,0,0,0,0,1,1,2,2,2,1,0],
+	[1,-1,2,1,1,0,0,0,0,0,0,1,-1,-1,1,0]]
 
 def check_if_finished(board, game_size):
     for i in range(game_size[0]):
@@ -45,17 +52,30 @@ def remove_cells(open_cells, to_remove, mine_case):
             if temp in open_cells and (i != 0 or j != 0):
                 cell_mine_list.append(temp);
     #print(cell_mine_list);
+    #if (6,2) in cell_mine_list:
+    #    print(cell_mine_list);
+    #    for neighbor in cell_mine_list:
+    #        print('this is the state before removal: \n', neighbor, '\n', 
+    #                open_cells[neighbor]);
     for neighbor in cell_mine_list:
         total_mines, possible_mines = open_cells[neighbor];
         #print ('this is the cell I am removing from\n', neighbor, possible_mines);
         new_possible_mines = [];
         for number, mine in possible_mines:
+            #if neighbor == (6, 2):
+                #print('neighboring mines: ', total_mines, number, 
+                #        mine, to_remove, open_cells[neighbor]);
             if to_remove in mine:
                 total_mines -= mine_case;
                 new_possible_mines.append((number - mine_case, mine - set([to_remove])));
             else:
                 new_possible_mines.append((number, mine));
+            #if neighbor == (6, 2):
+            #    print('neighboring mines: ', total_mines, number, 
+            #            mine, to_remove, open_cells[neighbor]);
         #print(neighbor, total_mines, new_possible_mines);        
+        #if neighbor == (6, 2):
+        #    print('new assignment of mines: ', total_mines, new_possible_mines);
         open_cells[neighbor] = (total_mines, new_possible_mines);
     return open_cells;
 
@@ -85,6 +105,8 @@ def calculate_probabilities(open_cells, cells):
     min_set = set();
     for prob_cell in cells:
         for num, mine_set in open_cells[prob_cell][1]:
+            if len(mine_set) == 0:
+                continue;
             if num == 0:
                 return (0, mine_set);
             cur_prob = float(num)/len(mine_set);
@@ -107,6 +129,10 @@ def intersect_and_divide(open_cells, cell):
                 intersecting_cells.append(temp);
     #print(intersecting_cells);
     #input('printing the intersections!');
+    #if cell == (6, 2):
+    #    for inter_cell in intersecting_cells:
+    #        print('these cells are intersecting!\n', inter_cell, 
+    #                open_cells[inter_cell], '\n');
     update_flag = False;
     for inter_cell in intersecting_cells:
         #print('original cell unknowns: ', cell, open_cells[cell]);
@@ -132,8 +158,8 @@ def intersect_and_divide(open_cells, cell):
                     #if inter_cell == (3, 3):
                         #print('I was here!!', left[1], right[1])
                     update_flag = True if uni_right != set() else False;
-                    if right[1] == cell:
-                        flag = True;
+                    #if right[1] == cell:
+                    flag = True;
                     new_right = [(left[2], left[0]), (right[2] - left[2], uni_right)];
               
                     if uni_right == set():
@@ -141,6 +167,8 @@ def intersect_and_divide(open_cells, cell):
                     temp_track.setdefault(right[1], []); 
                     temp_track[right[1]] = temp_track[right[1]] + new_right;
                     temp_track.setdefault(left[1], []).append((left[2], left[0]));
+                    #if cell == (6, 2) and inter_cell == (6, 1):
+                    #    print('in updates', temp_track, left, flag);
                     #update_flag = True;
                     break;
                 else:
@@ -156,7 +184,7 @@ def intersect_and_divide(open_cells, cell):
                         if count_valid > 1:
                             break;
                         valid_arrange = (i, inter_count, right[2] - inter_count);
-
+                        
                     if count_valid == 1:
                         update_flag = True;
                         #print('count valid triggered!', (valid_arrange[1], inter, left[1]));
@@ -166,6 +194,8 @@ def intersect_and_divide(open_cells, cell):
                         temp_track.setdefault(right[1], []) 
                         temp_track[right[1]] = temp_track[right[1]] + [(valid_arrange[1], inter),
                                 (valid_arrange[2], uni_right)];
+                        #if cell == (6, 2) and inter_cell == (6, 1):
+                        #    print('in updates', temp_track);
                         flag = True;
                     else:
                         temp_track.setdefault(inter_cell, []).append((inum, imine_set));
@@ -177,7 +207,9 @@ def intersect_and_divide(open_cells, cell):
             temp_track[inter_cell] = [];
         open_cells[cell] = (open_cells[cell][0], temp_track[cell]);
         temp_track[cell] = [];
-    
+        #if (cell == (6, 2)):
+            #print('after calculating intersection: \n', open_cells[inter_cell],
+            #        '\n', open_cells[cell]);
     return open_cells, calculate_probabilities(open_cells, [cell] + intersecting_cells), update_flag;
 
 def playgame(game_size):
@@ -219,7 +251,9 @@ def playgame(game_size):
             
             #if division_flag and cell == (3, 3):
             #    print(cell, unknowns, open_cells[cell], clear_indices);
-
+            #if (6,2) in open_cells:
+            #    print('problem is after or before this point: \n', cell, 
+            #            open_cells[(6,2)]);
             if clear_indices == []:
                 #print('divide and conquer');
                 #print(unknowns);
@@ -239,6 +273,11 @@ def playgame(game_size):
                     #print('------');
                     #input('first division ended here');
                 division_flag = True;
+            
+            #if (6,2) in open_cells:
+            #    print('problem is before this point: \n', cell, 
+            #            open_cells[(6,2)]);
+            
             count = 0;
             for ind in clear_indices:
                 #print('index', ind, unknowns);
@@ -264,17 +303,18 @@ def playgame(game_size):
            ##we have to handle two simple cases and one probabilistic and logical case
             #continue;
         if update_flag == False:
-            print('Going to guess!');
+            #print('Going to guess!');
             if min_probability[0] == float('inf'):
                 done = 1;
                 continue;
             #random_cell = random.randint(0, len(min_probability[1]) - 1);
-            random_cell = random.sample(min_probability[1]);#min_probability[1][random_cell];
+            random_cell = random.sample(min_probability[1], 1)[0];#min_probability[1][random_cell];
+            #print(min_probability[1], 1, random_cell);
             if user_board[random_cell[0]][random_cell[1]] == -1:
                 print('Oops we lost'); exit(-1);
             else:
-                open_cells = add_cells(open_cells, [0, set([random_cell])], game_size, board);
-            print('this is the minimum probability: ', min_probability);
+                open_cells = add_cells(open_cells, [(0, set([random_cell]))], game_size, board);
+            #print('this is the minimum probability: ', min_probability);
         for i in range(len(board)):
             print(board[i]);
         input('press enter to continue playing!');
@@ -282,4 +322,4 @@ def playgame(game_size):
         print(board[i]);
     return;
 if __name__ == '__main__':
-    playgame((9,9));
+    playgame((16,16));
