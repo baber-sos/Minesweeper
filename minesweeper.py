@@ -7,14 +7,14 @@ user_board = [[0,0,0,1,1,3,-1,2,1,-1,3,2,1,0,0,0],
         [1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0],
         [2,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [-1,-1,2,1,1,1,0,0,1,1,1,0,0,0,0,0],
-	[3,-1,2,1,-1,1,0,0,1,-1,2,2,2,2,1,0],
-	[2,3,3,2,1,1,0,1,3,4,-1,2,-1,-1,1,0],
-	[1,-1,-1,3,1,1,2,4,-1,-1,2,2,2,2,1,0],
-	[1,3,-1,-1,1,1,-1,-1,-1,4,2,1,1,1,0,0],
-	[0,2,3,3,1,1,2,3,3,-1,2,2,-1,1,0,0],
-	[0,1,-1,2,1,0,0,0,1,2,-1,2,1,1,0,0],
-	[1,2,3,-1,1,0,0,0,0,1,1,2,2,2,1,0],
-	[1,-1,2,1,1,0,0,0,0,0,0,1,-1,-1,1,0]]
+	    [3,-1,2,1,-1,1,0,0,1,-1,2,2,2,2,1,0],
+	    [2,3,3,2,1,1,0,1,3,4,-1,2,-1,-1,1,0],
+	    [1,-1,-1,3,1,1,2,4,-1,-1,2,2,2,2,1,0],
+	    [1,3,-1,-1,1,1,-1,-1,-1,4,2,1,1,1,0,0],
+	    [0,2,3,3,1,1,2,3,3,-1,2,2,-1,1,0,0],
+	    [0,1,-1,2,1,0,0,0,1,2,-1,2,1,1,0,0],
+	    [1,2,3,-1,1,0,0,0,0,1,1,2,2,2,1,0],
+	    [1,-1,2,1,1,0,0,0,0,0,0,1,-1,-1,1,0]]
 
 def check_if_finished(board, game_size):
     for i in range(game_size[0]):
@@ -80,13 +80,14 @@ def remove_cells(open_cells, to_remove, mine_case):
     return open_cells;
 
 ##adds cells to open cells which are sure to be clear
-def add_cells(open_cells, unknowns, game_size, board):
+def add_cells(open_cells, unknowns, game_size, board, unexplored):
     #print(unknowns);
     #something does nothing more than unpack things
     for something in unknowns:
         for cell in something[1]:
             if cell not in open_cells:
                 open_cells[cell] = gen_neighbors(cell, game_size, open_cells);
+                del unexplored[cell];
                 #print('this is the cell: ', cell);
                 open_cells = remove_cells(open_cells, cell, 0);
                 board[cell[0]][cell[1]] = user_board[cell[0]][cell[1]];
@@ -197,10 +198,12 @@ def intersect_and_divide(open_cells, cell):
                         #if cell == (6, 2) and inter_cell == (6, 1):
                         #    print('in updates', temp_track);
                         flag = True;
+                        break;
                     else:
                         temp_track.setdefault(inter_cell, []).append((inum, imine_set));
             if not flag:
                 temp_track.setdefault(cell, []).append((number, mine_set));
+            #print(temp_track, inter_cell, cell);
             #if inter_cell == (3, 3):
                 #print('temp', temp_track);
             open_cells[inter_cell] = (open_cells[inter_cell][0], temp_track[inter_cell]);
@@ -214,10 +217,18 @@ def intersect_and_divide(open_cells, cell):
 
 def playgame(game_size):
     board = [[-2 for i in range(game_size[1])] for j in range(game_size[0])];
+    unexplored = {};
+    for row in range(game_size[0]):
+        for col in range(game_size[1]):
+            unexplored[(row, col)] = 0;
     done = False;
     ##these are the non-zero cells which have been opened and still have 
     ##unknown neighbors left
     open_cells = {};
+    if user_board[0][0] == -1:
+        #print('the cell (0, 0) contained a mine. We lost!');
+        return False;
+    del unexplored[(0, 0)];
     open_cells[(0,0)] = gen_neighbors((0, 0), game_size, open_cells); #(user_board[0][0],\
             #[(user_board[0][0], gen_neighbors((0,0), game_size, open_cells))]);
     #print(user_board[0][0], gen_neighbors((0,0), game_size, open_cells));
@@ -227,7 +238,7 @@ def playgame(game_size):
         min_probability = (float('inf'), set());
         for cell in list(open_cells.keys()):
             unknowns = open_cells[cell];
-            print(cell, unknowns);
+            #print(cell, unknowns);
             ##this handles the zero case and is working pretty well
             if unknowns[0] in [-2, -1]:
                 continue;
@@ -236,7 +247,7 @@ def playgame(game_size):
                 if unknowns[1][i][0] == 0:
                     #if division_flag and cell == (3, 3):
                     #    print(cell, unknowns, open_cells[cell], clear_indices);
-                    open_cells = add_cells(open_cells, [unknowns[1][i]], game_size, board);
+                    open_cells = add_cells(open_cells, [unknowns[1][i]], game_size, board, unexplored);
                     #if division_flag and cell == (3, 3):
                     #    print(cell, unknowns, open_cells[cell], clear_indices);
                     clear_indices.append(i);
@@ -247,6 +258,7 @@ def playgame(game_size):
                     for mine_cell in unknowns[1][i][1]:
                         remove_cells(open_cells, mine_cell, 1);
                         open_cells[mine_cell] = (-1, []);
+                        del unexplored[mine_cell];
                         board[mine_cell[0]][mine_cell[1]] = -1;
             
             #if division_flag and cell == (3, 3):
@@ -304,22 +316,66 @@ def playgame(game_size):
             #continue;
         if update_flag == False:
             #print('Going to guess!');
-            if min_probability[0] == float('inf'):
+            random_cell = (0, 0);
+            if min_probability[0] == float('inf') and len(unexplored) > 0:
+                random_cell = list(unexplored.keys())[random.randint(0, len(unexplored) - 1)];
+            elif min_probability[0] == float('inf'):
                 done = 1;
                 continue;
-            #random_cell = random.randint(0, len(min_probability[1]) - 1);
-            random_cell = random.sample(min_probability[1], 1)[0];#min_probability[1][random_cell];
+            else:
+                #random_cell = random.randint(0, len(min_probability[1]) - 1);
+                random_cell = random.sample(min_probability[1], 1)[0];#min_probability[1][random_cell];
+            #print('Going to make a guess from the following: ', min_probability, random_cell);
+            #for prob_cell in min_probability[1]:
+            #    print(user_board[prob_cell[0]][prob_cell[1]]);
             #print(min_probability[1], 1, random_cell);
             if user_board[random_cell[0]][random_cell[1]] == -1:
-                print('Oops we lost'); exit(-1);
+                #print('Oops we lost');
+                return False;
             else:
-                open_cells = add_cells(open_cells, [(0, set([random_cell]))], game_size, board);
+                open_cells = add_cells(open_cells, [(0, set([random_cell]))], game_size, board, unexplored);
+                #del unexplored[random_cell];
             #print('this is the minimum probability: ', min_probability);
-        for i in range(len(board)):
-            print(board[i]);
-        input('press enter to continue playing!');
-    for i in range(len(board)):
-        print(board[i]);
-    return;
+    #    for i in range(len(board)):
+    #        print(board[i]);
+        #input('press enter to continue playing!');
+    #for i in range(len(board)):
+    #    print(board[i]);
+    return True;
+
+def generate_board(game_size, number_of_mines):
+    user_board = [[0 for i in range(0, game_size[1])] for j in range(0, game_size[0])];
+    mine_set = set();
+    while len(mine_set) < number_of_mines:
+        mine_set.add((random.randint(1, game_size[0] - 1), random.randint(1, game_size[1] - 1)));
+    for mine in mine_set:
+        user_board[mine[0]][mine[1]] = -1;
+    for i in range(game_size[0]):
+        for j in range(game_size[1]):
+            if user_board[i][j] == -1:
+                continue;
+            mine_count = 0;
+            for x in [-1, 0, 1]:
+                for y in [-1, 0, 1]:
+                    if x != 0 or y != 0:
+                        temp = (i + x, j + y);
+                        if temp[0] >= 0 and temp[0] < game_size[0] and temp[1] >= 0 and temp[1] < game_size[1]:
+                            if user_board[temp[0]][temp[1]] == -1:
+                                mine_count += 1;
+            user_board[i][j] = mine_count;
+    return user_board;
+
 if __name__ == '__main__':
-    playgame((16,16));
+    count = 0;
+    total_games = 1000;
+    mine_count = 60;
+    for i in range(total_games):
+        game_size = (16, 30)
+        user_board = generate_board(game_size, mine_count);
+        #for i in user_board:
+        #    print(i);
+        #print(user_board)
+        count += playgame(game_size);
+    print('total games won out of ', total_games, 'are: ', count);
+    print('Board Size: ', game_size);
+    print('Mine Count: ', mine_count);
